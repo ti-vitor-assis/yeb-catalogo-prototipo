@@ -32,6 +32,7 @@
     --salvia: #E6F6EE;
     --blush: #FDECE7;
     --ceu: #E4EEFA;
+    --agua: #E1F2F1;
     --whats: #E8F6EE;
     /* Nomes antigos, mantidos para o app.js */
     --marfim: var(--fundo);
@@ -156,7 +157,8 @@ img { display: block; max-width: 100%; }
 
 /* ---------- Categorias em blocos pastel (foto inteira, sem corte) ---------- */
 .blocos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-@media (min-width: 900px) { .blocos { grid-template-columns: repeat(4, 1fr); gap: 18px; } }
+/* Seis categorias: 3 por linha no computador, em blocos quadrados para não ficar alto demais */
+@media (min-width: 900px) { .blocos { grid-template-columns: repeat(3, 1fr); gap: 18px; } .blocos .bloco-cat { aspect-ratio: 1 / 1; } }
 .bloco-cat { position: relative; display: block; border-radius: 22px; overflow: hidden; aspect-ratio: 3 / 4; transition: transform 200ms var(--ease-out); }
 .bloco-cat:active { transform: scale(.98); }
 .bloco-cat img { position: absolute; left: 8%; right: 8%; top: 6%; bottom: 76px; width: 84%; height: calc(94% - 76px); object-fit: contain; mix-blend-mode: multiply; transition: transform 600ms var(--ease-out); }

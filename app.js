@@ -35,7 +35,7 @@ const CATEGORIAS = {
     MN: { nome: "Menino", frase: "Para brincar o dia todo", cor: "var(--ceu)", publicos: ["MN"] },
     IN: { nome: "Infantil", frase: "Peças para todos", cor: "var(--salvia)", publicos: ["IN", "UN"] },
     FE: { nome: "Feminino", frase: "Moda para a família", cor: "var(--baunilha)", publicos: ["FE"] },
-    MS: { nome: "Masculino", frase: "Moda para a família", cor: "var(--salvia)", publicos: ["MS"] },
+    MS: { nome: "Masculino", frase: "Moda para a família", cor: "var(--agua)", publicos: ["MS"] },
 };
 const PECAS = [
     ["", "Todas as peças"], ["CJ", "Conjuntos"], ["VE", "Vestidos"], ["CA", "Calças"], ["SH", "Shorts"],
@@ -139,8 +139,11 @@ function telaInicio() {
         return [...boas.filter((p) => p.fotos[0].startsWith("fotos/")), ...boas.filter((p) => !p.fotos[0].startsWith("fotos/"))];
     };
     const destaque = comFoto(novidades.filter((p) => ["MA", "BB"].includes(p.publico)))[0] || novidades[0];
-    const capaCategoria = (id) => (comFoto(novidades.filter((p) => p.id !== destaque.id && CATEGORIAS[id].publicos.includes(p.publico)))[0] || {}).fotos?.[0] || "";
-    const blocos = ["BB", "MA", "MN", "FE"];
+    const daCategoria = (id) => novidades.filter((p) => p.id !== destaque.id && CATEGORIAS[id].publicos.includes(p.publico));
+    // Foto do bloco: de preferência uma peça com várias fotos; se a categoria só tiver peças de uma foto, serve a primeira com estoque
+    const capaCategoria = (id) => (comFoto(daCategoria(id))[0] || daCategoria(id).find((p) => p.fotos.length && estoqueDe(p) > 0) || {}).fotos?.[0] || "";
+    // Todas as categorias que têm alguma peça disponível (antes eram só 4 fixas e Infantil e Masculino ficavam de fora)
+    const blocos = ["BB", "MA", "MN", "IN", "FE", "MS"].filter((id) => PRODUTOS.some((p) => CATEGORIAS[id].publicos.includes(p.publico) && estoqueDe(p) > 0));
     conteudo.innerHTML = `
         <section class="capa">
             <a class="capa-foto" href="#/p/${destaque.id}"><img src="${esc(foto(destaque.fotos[0]))}" alt="${esc(destaque.nome)}" /></a>
