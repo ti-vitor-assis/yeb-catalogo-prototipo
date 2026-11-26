@@ -157,11 +157,11 @@ function telaInicio() {
 
         <section class="secao">
             <div class="secao-titulo"><div><span class="sobretitulo">Compre por</span><h2>Para cada fase</h2></div></div>
-            <div class="blocos">${blocos.map((id) => `
-                <a class="bloco-cat" href="#/c/${id}" style="background:${CATEGORIAS[id].cor}">
-                    ${capaCategoria(id) ? `<img src="${esc(foto(capaCategoria(id), true))}" alt="" loading="lazy" />` : ""}
+            <div class="blocos" id="faixaCategorias" aria-label="Categorias">${[false, true].map((copia) => blocos.map((id) => `
+                <a class="bloco-cat" href="#/c/${id}" style="background:${CATEGORIAS[id].cor}"${copia ? ` aria-hidden="true" tabindex="-1" data-copia` : ""}>
+                    ${capaCategoria(id) ? `<img src="${esc(foto(capaCategoria(id), true))}" alt="" loading="lazy" draggable="false" />` : ""}
                     <span>${CATEGORIAS[id].nome}<small>${CATEGORIAS[id].frase}</small></span>
-                </a>`).join("")}</div>
+                </a>`).join("")).join("")}</div>
         </section>
 
         <section class="secao">
@@ -174,6 +174,48 @@ function telaInicio() {
             <div class="grade">${novidades.filter((p) => p.publico === "BB" && estoqueDe(p) > 0).slice(0, 8).map(cartao).join("")}</div>
         </section>`;
     ativarCarrosseis(conteudo);
+    deslizarCategorias($("faixaCategorias"));
+}
+
+// ---------- Faixa de categorias que desliza devagar ----------
+// As categorias aparecem duas vezes seguidas; quando a primeira volta inteira passa, a posição volta
+// para o começo sem a cliente perceber. Para quando o mouse está em cima, quando a cliente arrasta
+// com o dedo (e volta 3 s depois) e quando o sistema pede menos movimento.
+function deslizarCategorias(faixa) {
+    if (!faixa) return;
+    const copias = faixa.querySelectorAll("[data-copia]");
+    const semMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const volta = () => (copias[0] ? copias[0].offsetLeft - faixa.firstElementChild.offsetLeft : 0);
+    if (semMovimento || volta() <= faixa.clientWidth) {
+        copias.forEach((c) => c.remove()); // cabe tudo (ou movimento desligado): fica parada, com rolagem normal
+        return;
+    }
+    const VELOCIDADE = 28; // pixels por segundo: lentinho
+    let pos = faixa.scrollLeft, anterior = 0, parada = false, retomar = 0;
+    const pausar = () => { parada = true; clearTimeout(retomar); };
+    const continuar = (ms = 0) => { clearTimeout(retomar); retomar = setTimeout(() => { pos = faixa.scrollLeft; parada = false; }, ms); };
+    faixa.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") pausar(); });
+    faixa.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") continuar(); });
+    faixa.addEventListener("touchstart", pausar, { passive: true });
+    faixa.addEventListener("touchend", () => continuar(3000), { passive: true });
+    faixa.addEventListener("focusin", pausar);
+    faixa.addEventListener("focusout", () => continuar());
+    faixa.addEventListener("wheel", () => { pausar(); continuar(3000); }, { passive: true });
+    function passo(agora) {
+        if (!faixa.isConnected) return; // saiu da tela inicial
+        const dt = anterior ? Math.min(agora - anterior, 100) / 1000 : 0;
+        anterior = agora;
+        const v = volta();
+        if (!parada && v > 0) {
+            pos += VELOCIDADE * dt;
+            if (pos >= v) pos -= v;
+            faixa.scrollLeft = pos;
+        } else if (v > 0 && faixa.scrollLeft >= v) {
+            faixa.scrollLeft -= v; // arrastou com o dedo além da primeira volta
+        }
+        requestAnimationFrame(passo);
+    }
+    requestAnimationFrame(passo);
 }
 
 // ---------- Lista: categoria ou busca ----------
